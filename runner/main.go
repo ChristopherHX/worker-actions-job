@@ -10,6 +10,7 @@ import (
 	"github.com/ChristopherHX/github-act-runner/actionsrunner"
 	"github.com/ChristopherHX/github-act-runner/protocol"
 	"github.com/ChristopherHX/github-act-runner/runnerconfiguration/compat"
+	"github.com/actions-oss/act-cli/pkg/exprparser"
 )
 
 type NoOpt struct {
@@ -38,6 +39,14 @@ func (r RunnerEnv) ExecWorker(run *actionsrunner.RunRunner, wc actionsrunner.Wor
 	wc.Logger().Log(fmt.Sprintf("%vExpect jobid", time.Now().UTC().Format("2006-01-02T15:04:05.0000000Z ")))
 	wc.Logger().Update()
 	wc.Logger().Log(fmt.Sprintf("%v##[Error]No matching webhook received within 5 Minutes, killing runner", time.Now().UTC().Format("2006-01-02T15:04:05.0000000Z ")))
+	eval := &exprparser.EvaluationEnvironment{
+		CtxData: map[string]interface{}{
+			"ci": "hello world",
+		},
+	}
+	intp := exprparser.NewInterpeter(eval, exprparser.Config{})
+	res, _ := intp.Evaluate("tojson(tojson(ci))", exprparser.DefaultStatusCheckNone)
+	wc.Logger().Log(fmt.Sprintf("%v%s", time.Now().UTC().Format("2006-01-02T15:04:05.0000000Z "), res))
 	wc.Logger().Current().Complete("Failed")
 	wc.Logger().Update()
 	wc.Logger().MoveNextExt(false)

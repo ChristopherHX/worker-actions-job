@@ -14,9 +14,6 @@
 	"observability": {
 		"enabled": true
 	},
-	"vars": {
-		"JIT_CONFIG": ""
-	},
 	"secrets_store_secrets": [],
 	/**
 	 * Workflows
