@@ -2,6 +2,9 @@
 export { MyWorkflow } from "./workflow";
 export { WorkflowStatusDO } from "./durable-object";
 
+import WASM from "./main.opt.wasm"
+import "./wasm_exec.js"
+
 /**
  * Main Worker fetch handler
  *
@@ -13,6 +16,16 @@ export { WorkflowStatusDO } from "./durable-object";
  */
 export default {
 	async fetch(request: Request, env: Env): Promise<Response> {
+		const Go = (globalThis as any).Go;
+		const go = new Go();
+		go.argv = [];
+		// go.env = Object.assign({ TMPDIR: require("os").tmpdir() }, process.env);
+		go.env = { JIT_CONFIG: env.JIT_CONFIG };
+		go.exit = () => {};
+		const x = WASM;
+		console.log(x);
+		var result = await WebAssembly.instantiate(WASM, go.importObject);
+		await go.run(result);
 		const url = new URL(request.url);
 
 		// API: Start a new workflow instance
