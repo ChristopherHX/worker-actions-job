@@ -15,7 +15,7 @@ import "./wasm_exec.js"
  * - GET /ws - WebSocket connection for real-time updates
  */
 export default {
-	async fetch(request: Request, env: Env | { JIT_CONFIG: string }): Promise<Response> {
+	async fetch(request: Request, env: Env): Promise<Response> {
 		const Go = (globalThis as any).Go;
 		const go = new Go();
 		go.argv = [];
