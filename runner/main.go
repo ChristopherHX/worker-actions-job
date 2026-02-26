@@ -60,6 +60,7 @@ func (r RunnerEnv) ExecWorker(run *actionsrunner.RunRunner, wc actionsrunner.Wor
 						wc.Logger().Current().Complete("Failure")
 					}
 					req.SetBasicAuth("", wc.Message().Variables["system.github.token"].Value)
+					req.Header.Set("User-Agent", "github-act-runner/1.0.0")
 					resp, err := http.DefaultClient.Do(req)
 					if err != nil {
 						println(err)
