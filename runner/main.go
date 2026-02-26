@@ -132,7 +132,7 @@ func main() {
 	runner := &actionsrunner.RunRunner{
 		Once:     true,
 		Settings: res,
-		Trace:    true,
+		Trace:    false,
 		Version:  "3.0.0",
 	}
 	// ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
