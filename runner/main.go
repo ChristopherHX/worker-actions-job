@@ -42,32 +42,34 @@ func (r RunnerEnv) ExecWorker(run *actionsrunner.RunRunner, wc actionsrunner.Wor
 	for i, step := range wc.Message().Steps {
 		timelineEntry := protocol.CreateTimelineEntry(jobreq.JobID, step.ID, "Run "+step.Reference.Name+"@"+step.Reference.Ref)
 		stepEntry := wc.Logger().Append(&timelineEntry)
-		stepEntry.Order = int32(i)
+		stepEntry.Order = int32(i + 1)
 	}
 	wc.Logger().Current().Complete("Succeeded")
 	wc.Logger().Update()
 	for _, step := range wc.Message().Steps {
 		wc.Logger().MoveNextExt(true)
-		inputs := step.Inputs.ToJSONRawObject()
-		if m, ok := inputs.(map[string]interface{}); ok {
-			if sURL, ok := m["url"].(string); ok {
-				wc.Logger().Log(fmt.Sprintf("%vExecute Http Request %v", time.Now().UTC().Format("2006-01-02T15:04:05.0000000Z "), sURL))
+		if step.Inputs != nil {
+			inputs := step.Inputs.ToJSONRawObject()
+			if m, ok := inputs.(map[string]interface{}); ok {
+				if sURL, ok := m["url"].(string); ok {
+					wc.Logger().Log(fmt.Sprintf("%vExecute Http Request %v", time.Now().UTC().Format("2006-01-02T15:04:05.0000000Z "), sURL))
 
-				req, err := http.NewRequestWithContext(wc.JobExecCtx(), http.MethodGet, sURL, nil)
-				if err != nil {
-					println(err)
-					wc.Logger().Current().Complete("Failure")
+					req, err := http.NewRequestWithContext(wc.JobExecCtx(), http.MethodGet, sURL, nil)
+					if err != nil {
+						println(err)
+						wc.Logger().Current().Complete("Failure")
+					}
+					req.SetBasicAuth("", wc.Message().Variables["system.github.token"].Value)
+					resp, err := http.DefaultClient.Do(req)
+					if err != nil {
+						println(err)
+						wc.Logger().Current().Complete("Failure")
+					}
+					data, _ := io.ReadAll(resp.Body)
+					wc.Logger().Log(fmt.Sprintf("%vStatus %v, Response: %v", time.Now().UTC().Format("2006-01-02T15:04:05.0000000Z "), resp.StatusCode, string(data)))
+					wc.Logger().Current().Complete("Succeeded")
+					continue
 				}
-				req.SetBasicAuth("", wc.Message().Variables["system.github.token"].Value)
-				resp, err := http.DefaultClient.Do(req)
-				if err != nil {
-					println(err)
-					wc.Logger().Current().Complete("Failure")
-				}
-				data, _ := io.ReadAll(resp.Body)
-				wc.Logger().Log(fmt.Sprintf("%vStatus %v, Response: %v", time.Now().UTC().Format("2006-01-02T15:04:05.0000000Z "), resp.StatusCode, string(data)))
-				wc.Logger().Current().Complete("Succeeded")
-				continue
 			}
 		}
 		wc.Logger().Current().Complete("Failure")
